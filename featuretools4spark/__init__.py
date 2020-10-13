@@ -1,1 +1,1 @@
-__version__ = '0.1.0'
+from .featuretools4s import EntitySet, Relationship, dfs

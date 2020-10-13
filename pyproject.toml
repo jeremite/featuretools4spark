@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "featuretools4spark"
-version = "0.1.0"
+version = "0.1.2"
 description = ""
 authors = ["Weixing Li <weixing.li@verisk.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.6"
 featuretools = "^0.20.0"
 pandas = "^1.1.3"
 
