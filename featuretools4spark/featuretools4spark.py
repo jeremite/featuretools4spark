@@ -272,7 +272,7 @@ def dfs(spark: SparkSession,
                              es_id: str,
                              entities: list,
                              relationships: list,
-                             interestings: list):
+                             interestings: list=None):
         #nonlocal out
         list_iter = list(iterator)
         print('in single')
@@ -304,16 +304,17 @@ def dfs(spark: SparkSession,
                 child_col = EntitySpark.recover_col_name(child_entity, relationship.child_variable.column_name)
                 es.add_relationship(f.Relationship(es[parent_entity][parent_col],
                                                     es[child_entity][child_col]))
-            
-            for interesting in interestings:
-                entityid = interesting.entity_id 
-                col = interesting.column
-                intr_vals = interesting.vals
-                es[entityid][col].interesting_values = intr_vals
+            if interestings:
+                for interesting in interestings:
+                    entityid = interesting.entity_id 
+                    col = interesting.column
+                    intr_vals = interesting.vals
+                    es[entityid][col].interesting_values = intr_vals
 
             feature_matrix, feature_dfs = f.dfs(entityset=es,
                                                  agg_primitives=agg_primitives,
                                                  trans_primitives=trans_primitives,
+                                                 where_primitives=where_primitives,
                                                  target_entity=target_entity,
                                                  cutoff_time=cutoff_time,
                                                  cutoff_time_in_index=False,
@@ -361,10 +362,11 @@ def dfs(spark: SparkSession,
     print('enetities are',entities)
     relationships = entityset.relationships
     interestings = entityset.interestings
+    print('interestings are',interestings)
     rdd = repartitioned.rdd.mapPartitions(lambda iteration: run_single_partition(iteration, all_columns,
                                                                                  es_id, entities, relationships,interestings))
 
-    
+    print('before rdd')
     # using Rdd of Rows
     res_df = rdd.map(lambda x: Row(**x)).toDF()
     return res_df
