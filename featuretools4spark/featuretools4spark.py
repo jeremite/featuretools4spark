@@ -1,4 +1,4 @@
-import featuretools as ft
+import featuretools as f
 import numpy as np
 import pandas as pd
 from dateutil import parser
@@ -280,7 +280,7 @@ def dfs(spark: SparkSession,
         if len(list_iter) > 0:
             data = pd.DataFrame(list_iter, columns=all_columns)
 
-            es = ft.EntitySet(id=es_id)
+            es = f.EntitySet(id=es_id)
             for entity in entities:
                 columns = entity.columns
 
@@ -302,7 +302,7 @@ def dfs(spark: SparkSession,
                 parent_col = EntitySpark.recover_col_name(parent_entity, relationship.parent_variable.column_name)
                 child_entity = relationship.child_variable.entity_id
                 child_col = EntitySpark.recover_col_name(child_entity, relationship.child_variable.column_name)
-                es.add_relationship(ft.Relationship(es[parent_entity][parent_col],
+                es.add_relationship(f.Relationship(es[parent_entity][parent_col],
                                                     es[child_entity][child_col]))
             
             for interesting in interestings:
@@ -311,7 +311,7 @@ def dfs(spark: SparkSession,
                 intr_vals = interesting.vals
                 es[entityid][col].interesting_values = intr_vals
 
-            feature_matrix, feature_dfs = ft.dfs(entityset=es,
+            feature_matrix, feature_dfs = f.dfs(entityset=es,
                                                  agg_primitives=agg_primitives,
                                                  trans_primitives=trans_primitives,
                                                  target_entity=target_entity,
