@@ -336,8 +336,8 @@ def dfs(spark: SparkSession,
             for i in range(feature_matrix.shape[0]):
                 row_res = {}
                 for col in columns:
-                    value = feature_matrix.ix[i, col]
-
+                    value = feature_matrix.loc[i, col]
+                    #value 
                     # convert Numpy types to Python types, otherwise it cannot be converted
                     # to Spark DataFrame.
                     if isinstance(value, np.int64):
