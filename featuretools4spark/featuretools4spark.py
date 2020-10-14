@@ -6,23 +6,27 @@ from pyspark.sql import SparkSession, Row
 from pyspark.sql.dataframe import DataFrame
 
 
+itvals={}
 class EntityColumn:
     def __init__(self, entity_id: str, column_name: str):
         self.entity_id = entity_id
         self.column_name = EntitySpark.change_col_name(entity_id, column_name)
         #self._interesting_values = None #Interesting_Values(self.entity_id,self.column_name,interesting_values)
-    '''
+    
     @property
     def interesting_values(self):
-        return self._interesting_values
+        return itvals[(self.entity_id,self.column_name)]
 
     @interesting_values.setter
-    def interesting_values(self, interesting_values):
-        vals =  Interesting_Value(self.entity_id,self.column_name,interesting_values)
-        #print('y is',y)
-        self._interesting_values =vals
-        EntitySet.interestings.append(vals)
-    '''
+    def interesting_values(self, interesting_value):
+        #print('columns name is',self.column_name)
+        col_ori = EntitySpark.recover_col_name(self.entity_id, self.column_name)
+        #print('col used is',col_ori)
+        self._interesting_values =Interesting_Value(self.entity_id,col_ori,interesting_value)
+        EntitySet.interestings.append(self._interesting_values)
+        itvals[(self.entity_id,self.column_name)]=interesting_value
+        #print('apend intereste')
+    
 class EntitySpark:
     def __init__(self,
                  entity_id: str,
@@ -101,12 +105,12 @@ class EntitySet:
     """
     todo Current known limitations:
     """
-
+    interestings = []
     def __init__(self, id: str):
         self.id = id
         self.entity_dict = {}
         self.relationships = []
-        self.interestings = []
+        #self.interestings = []
 
     def entity_from_dataframe(self,
                               entity_id: str,
@@ -261,11 +265,11 @@ def dfs(spark: SparkSession,
     # TODO need to handle cases when `cutoff_time` is not None
 
     big_df = entityset.get_big_df()
-    print('big_df type',type(big_df))
+    #print('big_df type',type(big_df))
     repartition_col = EntitySpark.change_col_name(primary_entity, primary_col)
     n_partitions = num_partition if num_partition is not None else big_df.select(repartition_col).distinct().count()
     repartitioned = big_df.repartition(n_partitions, repartition_col)
-    print('repartitioned type',type(repartitioned))
+    #print('repartitioned type',type(repartitioned))
     out={'fts':None}
     def run_single_partition(iterator,
                              all_columns: list,
@@ -275,8 +279,6 @@ def dfs(spark: SparkSession,
                              interestings: list=None):
         #nonlocal out
         list_iter = list(iterator)
-        print('in single')
-        print('iterator',list_iter[0])
         if len(list_iter) > 0:
             data = pd.DataFrame(list_iter, columns=all_columns)
 
@@ -359,14 +361,12 @@ def dfs(spark: SparkSession,
     all_columns = big_df.columns
     es_id = entityset.id
     entities = [entityset.entity_dict[entity].drop_data() for entity in entityset.entity_dict]
-    print('enetities are',entities)
     relationships = entityset.relationships
     interestings = entityset.interestings
-    print('interestings are',interestings)
     rdd = repartitioned.rdd.mapPartitions(lambda iteration: run_single_partition(iteration, all_columns,
                                                                                  es_id, entities, relationships,interestings))
 
-    print('before rdd')
+    #print('before rdd')
     # using Rdd of Rows
     res_df = rdd.map(lambda x: Row(**x)).toDF()
     return res_df
